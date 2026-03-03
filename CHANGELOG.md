@@ -1,3 +1,10 @@
+## [2.34.2](https://github.com/EveryInc/compound-engineering-plugin/compare/v2.34.1...v2.34.2) (2026-03-03)
+
+
+### Bug Fixes
+
+* **release:** add package repository metadata ([eab77bc](https://github.com/EveryInc/compound-engineering-plugin/commit/eab77bc5b5361dc73e2ec8aa4678c8bb6114f6e7))
+
 ## [2.34.1](https://github.com/EveryInc/compound-engineering-plugin/compare/v2.34.0...v2.34.1) (2026-03-03)
 
 
