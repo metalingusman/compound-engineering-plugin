@@ -17,7 +17,7 @@ Use this skill when the plan already exists and the question is not "Is this doc
 This skill does **not** turn plans into implementation scripts. It identifies weak sections, runs targeted research only for those sections, and strengthens the plan in place.
 
 `document-review` and `deepen-plan` are different:
-- Use `document-review` when the document needs clarity, simplification, completeness, or scope control
+- Use the `document-review` skill when the document needs clarity, simplification, completeness, or scope control
 - Use `deepen-plan` when the document is structurally sound but still needs stronger rationale, sequencing, risk treatment, or system-wide thinking
 
 ## Interaction Method
@@ -82,7 +82,7 @@ Use this default:
 
 If the plan already appears sufficiently grounded:
 - Say so briefly
-- Recommend moving to `ce:work` or `document-review`
+- Recommend moving to `/ce:work` or the `document-review` skill
 - If the user explicitly asked to deepen anyway, continue with a light pass and deepen at most 1-2 sections
 
 ### Phase 1: Parse the Current `ce:plan` Structure
@@ -304,18 +304,18 @@ If substantive changes were made, present next steps using the platform's blocki
 
 **Options:**
 1. **View diff** - Show what changed
-2. **Review and refine** - Run the `document-review` skill on the updated plan
+2. **Run `document-review` skill** - Improve the updated plan through structured document review
 3. **Start `ce:work` skill** - Begin implementing the plan
 4. **Deepen specific sections further** - Run another targeted deepening pass on named sections
 
 Based on selection:
 - **View diff** -> Show the important additions and changed sections
-- **Review and refine** -> Load the `document-review` skill with the plan path
+- **`document-review` skill** -> Load the `document-review` skill with the plan path
 - **Start `ce:work` skill** -> Call the `ce:work` skill with the plan path
 - **Deepen specific sections further** -> Ask which sections still feel weak and run another targeted pass only for those sections
 
 If no substantive changes were warranted:
 - Say that the plan already appears sufficiently grounded
-- Offer `document-review` or `ce:work` as the next step instead
+- Offer the `document-review` skill or `/ce:work` as the next step instead
 
 NEVER CODE! Research, challenge, and strengthen the plan.

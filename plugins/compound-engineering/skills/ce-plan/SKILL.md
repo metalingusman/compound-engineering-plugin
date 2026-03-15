@@ -513,17 +513,17 @@ After writing the plan file, present the options using the platform's blocking q
 
 **Options:**
 1. **Open plan in editor** - Open the plan file for review
-2. **Run `deepen-plan` skill** - Stress-test weak sections with targeted research when the plan needs more confidence
-3. **Review and refine** - Improve the plan through structured document review
+2. **Run `/deepen-plan`** - Stress-test weak sections with targeted research when the plan needs more confidence
+3. **Run `document-review` skill** - Improve the plan through structured document review
 4. **Share to Proof** - Upload the plan for collaborative review and sharing
-5. **Start `ce:work` skill** - Begin implementing this plan in the current environment
-6. **Start `ce:work` skill in another session** - Begin implementing in a separate agent session when the current platform supports it
+5. **Start `/ce:work`** - Begin implementing this plan in the current environment
+6. **Start `/ce:work` in another session** - Begin implementing in a separate agent session when the current platform supports it
 7. **Create Issue** - Create an issue in the configured tracker
 
 Based on selection:
 - **Open plan in editor** → Open `docs/plans/<plan_filename>.md` using the current platform's file-open or editor mechanism (e.g., `open` on macOS, `xdg-open` on Linux, or the IDE's file-open API)
-- **`deepen-plan` skill** → Call the `deepen-plan` skill with the plan path
-- **Review and refine** → Load the `document-review` skill
+- **`/deepen-plan`** → Call `/deepen-plan` with the plan path
+- **`document-review` skill** → Load the `document-review` skill with the plan path
 - **Share to Proof** → Upload the plan:
   ```bash
   CONTENT=$(cat docs/plans/<plan_filename>.md)
@@ -534,12 +534,12 @@ Based on selection:
   PROOF_URL=$(echo "$RESPONSE" | jq -r '.tokenUrl')
   ```
   Display `View & collaborate in Proof: <PROOF_URL>` if successful, then return to the options
-- **`ce:work` skill** → Call the `ce:work` skill with the plan path
-- **`ce:work` skill in another session** → If the current platform supports launching a separate agent session, start the `ce:work` skill with the plan path there. Otherwise, explain the limitation briefly and offer to run the `ce:work` skill in the current session instead.
+- **`/ce:work`** → Call `/ce:work` with the plan path
+- **`/ce:work` in another session** → If the current platform supports launching a separate agent session, start `/ce:work` with the plan path there. Otherwise, explain the limitation briefly and offer to run `/ce:work` in the current session instead.
 - **Create Issue** → Follow the Issue Creation section below
 - **Other** → Accept free text for revisions and loop back to options
 
-If running with ultrathink enabled, or the platform's reasoning/effort level is set to max or extra-high, automatically run the `deepen-plan` skill only when the plan is `Standard` or `Deep`, high-risk, or still shows meaningful confidence gaps in decisions, sequencing, system-wide impact, risks, or verification.
+If running with ultrathink enabled, or the platform's reasoning/effort level is set to max or extra-high, automatically run `/deepen-plan` only when the plan is `Standard` or `Deep`, high-risk, or still shows meaningful confidence gaps in decisions, sequencing, system-wide impact, risks, or verification.
 
 ## Issue Creation
 
@@ -564,6 +564,6 @@ When the user selects "Create Issue", detect their project tracker from `CLAUDE.
 
 After issue creation:
 - Display the issue URL
-- Ask whether to proceed to the `ce:work` skill
+- Ask whether to proceed to `/ce:work`
 
 NEVER CODE! Research, decide, and write the plan.
