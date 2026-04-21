@@ -32,6 +32,11 @@ Before touching any code, read the referenced file and classify the feedback:
 3. **Is it still relevant?** Has the code at this location changed since the review?
    - NO -> verdict: `not-addressing`
 
+   **Outdated threads (`isOutdated=true`):** The diff hunk shifted, so the reported line may no longer be where the concern lives. GitHub also exposes `line` as nullable -- outdated and file-level threads often have `line == null`. Start the lookup at whichever location field is available, preferring in order: `line`, `startLine`, `originalLine`, `originalStartLine`. If none resolve to current content matching the reviewer's description, extract an anchor from the comment (a symbol, identifier, or distinctive phrase) and search the **same file** once for it before concluding. Do not search other files. Three outcomes:
+   - Anchor found in the file (here or elsewhere in it) -> re-evaluate at that location using steps 2-4.
+   - Anchor not found and the comment describes concrete in-place code -> verdict: `not-addressing` with evidence ("searched <file> for <anchor>, not present").
+   - Anchor not found and the comment suggests the code was extracted to another file -> verdict: `needs-human`. Do not grep the repo; the reviewer's surrounding context is gone and picking the right new location is a judgment call for the user.
+
 4. **Would fixing improve the code?**
    - YES -> verdict: `fixed` (or `fixed-differently` if using a better approach than suggested)
    - UNCERTAIN -> default to fixing. Agent time is cheap.
