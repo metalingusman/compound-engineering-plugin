@@ -15,8 +15,8 @@ describe("ce-code-review contract", () => {
     expect(content).toContain("mode:autofix")
     expect(content).toContain("mode:report-only")
     expect(content).toContain("mode:headless")
-    expect(content).toContain(".context/compound-engineering/ce-code-review/<run-id>/")
-    expect(content).toContain("Do not write `.context` artifacts.")
+    expect(content).toContain("/tmp/compound-engineering/ce-code-review/<run-id>/")
+    expect(content).toContain("Do not write run artifacts.")
     expect(content).toContain(
       "Do not start a mutating review round concurrently with browser testing on the same checkout.",
     )
