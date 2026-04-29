@@ -197,3 +197,26 @@ This repo builds a plugin *for* developers. Categorize solutions from the perspe
 - **`workflow/`**, **`skill-design/`** — Plugin skill and agent design patterns, workflow improvements.
 
 When in doubt: if the bug affects someone running `bun install compound-engineering` or `bun convert`, it's an integration or product issue, not developer-experience.
+
+<!-- compound-engineering:begin -->
+## Compound Engineering
+
+This project uses the [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin via the Warp target.
+
+The core loop:
+
+- `/ce-brainstorm` — Interactive Q&A to define what to build.
+- `/ce-plan` — Turn brainstorms or rough ideas into structured plans.
+- `/ce-work` — Execute plans with worktrees and task tracking.
+- `/ce-code-review` — Multi-persona review before merging (v0.1: serial; v0.2: parallel via `/orchestrate`).
+- `/ce-compound` — Codify learnings so the next cycle starts smarter.
+
+Generated artifacts live under:
+
+- `docs/brainstorms/` — requirements documents from `/ce-brainstorm`.
+- `docs/plans/` — implementation plans from `/ce-plan`.
+- `docs/solutions/` — institutional learnings from `/ce-compound`, organized by category with YAML frontmatter.
+- `todos/` — review findings and prioritized work items.
+
+Personas dispatched by review/work skills live at `.warp/skills/_ce-agents/<name>.md` and are referenced by the dispatching skill via relative paths. Do not invoke them as slash commands directly.
+<!-- compound-engineering:end -->

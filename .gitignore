@@ -10,3 +10,11 @@ __pycache__/
 *.pyc
 
 .compound-engineering/*.local.yaml
+
+# Warp install target output (derived from plugins/compound-engineering/).
+# Re-create with: bun run dogfood:warp
+.warp/
+
+# Backups created by the install/cleanup managed-artifacts machinery when
+# merging the Compound Engineering block into an existing AGENTS.md.
+AGENTS.md.bak.*
