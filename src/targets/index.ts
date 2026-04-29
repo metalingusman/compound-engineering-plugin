@@ -4,11 +4,13 @@ import { convertClaudeToCodex } from "../converters/claude-to-codex"
 import { convertClaudeToPi } from "../converters/claude-to-pi"
 import { convertClaudeToGemini } from "../converters/claude-to-gemini"
 import { convertClaudeToKiro } from "../converters/claude-to-kiro"
+import { convertClaudeToWarp } from "../converters/claude-to-warp"
 import { writeOpenCodeBundle } from "./opencode"
 import { writeCodexBundle } from "./codex"
 import { writePiBundle } from "./pi"
 import { writeGeminiBundle } from "./gemini"
 import { writeKiroBundle } from "./kiro"
+import { writeWarpBundle } from "./warp"
 
 export type TargetScope = "global" | "workspace"
 
@@ -77,5 +79,16 @@ export const targets: Record<string, TargetHandler> = {
     implemented: true,
     convert: convertClaudeToKiro as TargetHandler["convert"],
     write: writeKiroBundle as TargetHandler["write"],
+  },
+  warp: {
+    name: "warp",
+    implemented: true,
+    // Workspace install is the canonical Warp surface (skills land under
+    // <repo>/.warp/skills and AGENTS.md is merged at the repo root). Global
+    // installs go to ~/.warp/skills and skip the AGENTS.md merge.
+    defaultScope: "workspace",
+    supportedScopes: ["workspace", "global"],
+    convert: convertClaudeToWarp as TargetHandler["convert"],
+    write: writeWarpBundle as TargetHandler["write"],
   },
 }
