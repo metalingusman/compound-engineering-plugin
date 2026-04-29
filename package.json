@@ -18,6 +18,7 @@
     "list": "bun run src/index.ts list",
     "cli:install": "bun run src/index.ts install",
     "dogfood:warp": "bun run src/index.ts convert plugins/compound-engineering --to warp --output .",
+    "sync:upstream": "bash scripts/sync-upstream.sh",
     "test": "bun test",
     "release:preview": "bun run scripts/release/preview.ts",
     "release:sync-metadata": "bun run scripts/release/sync-metadata.ts --write",
