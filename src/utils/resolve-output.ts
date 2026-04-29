@@ -22,6 +22,16 @@ export function resolveTargetOutputRoot(options: {
     const base = hasExplicitOutput ? outputRoot : process.cwd()
     return path.join(base, ".kiro")
   }
+  if (targetName === "warp") {
+    // Workspace install (default) writes to <cwd>/.warp; --scope global
+    // writes to ~/.warp and skips the AGENTS.md merge. An explicit --output
+    // overrides the workspace branch.
+    if (options.scope === "global") {
+      return path.join(process.env.HOME ?? process.env.USERPROFILE ?? process.cwd(), ".warp")
+    }
+    const base = hasExplicitOutput ? outputRoot : process.cwd()
+    return path.join(base, ".warp")
+  }
   if (targetName === "opencode") {
     // Without an explicit --output, default to the OpenCode global-config root
     // (OPENCODE_CONFIG_DIR or ~/.config/opencode). With an explicit --output,

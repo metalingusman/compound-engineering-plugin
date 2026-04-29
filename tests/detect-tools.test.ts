@@ -45,7 +45,10 @@ describe("detectInstalledTools", () => {
 
     const results = await detectInstalledTools(tempHome, tempCwd)
 
-    expect(results.length).toBe(8)
+    // Detection set: opencode, codex, pi, droid, copilot, gemini, kiro, qwen, warp.
+    // Bumping this number is the canonical signal that a new target was added
+    // and should be considered for the install/cleanup/convert command surfaces.
+    expect(results.length).toBe(9)
     for (const tool of results) {
       expect(tool.detected).toBe(false)
       expect(tool.reason).toBe("not found")

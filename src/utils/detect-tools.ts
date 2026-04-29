@@ -73,6 +73,15 @@ const detectableTools: DetectableTool[] = [
       path.join(cwd, ".qwen"),
     ],
   },
+  {
+    name: "warp",
+    detectPaths: (home, cwd) => [
+      // Workspace .warp/ is the canonical install surface; ~/.warp also
+      // counts because the global install lands there.
+      path.join(cwd, ".warp"),
+      path.join(home, ".warp"),
+    ],
+  },
 ]
 
 export async function detectInstalledTools(

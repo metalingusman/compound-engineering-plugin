@@ -11,6 +11,7 @@ import { convertClaudeToGemini } from "../converters/claude-to-gemini"
 import { convertClaudeToKiro } from "../converters/claude-to-kiro"
 import { convertClaudeToOpenCode } from "../converters/claude-to-opencode"
 import { convertClaudeToPi } from "../converters/claude-to-pi"
+import { convertClaudeToWarp } from "../converters/claude-to-warp"
 import {
   getLegacyCodexArtifacts,
   getLegacyCopilotArtifacts,
@@ -22,14 +23,18 @@ import {
   getLegacyPluginArtifacts,
   getLegacyWindsurfArtifacts,
 } from "../data/plugin-legacy-artifacts"
-import { moveLegacyArtifactToBackup } from "../targets/managed-artifacts"
+import {
+  moveLegacyArtifactToBackup,
+  readManagedInstallManifestWithLegacyFallback,
+  sanitizeManagedPluginName,
+} from "../targets/managed-artifacts"
 import { isManagedCodexAgentsSymlink, readCodexInstallManifest, resolveCodexManagedRoots } from "../targets/codex"
 import { classifyCodexLegacyPromptOwnership } from "../utils/legacy-cleanup"
 import { isSafeManagedPath, pathExists, readJson, sanitizePathName } from "../utils/files"
 import { resolveOpenCodeGlobalRoot } from "../utils/opencode-config"
 import { expandHome, resolveTargetHome } from "../utils/resolve-home"
 
-const cleanupTargets = ["codex", "opencode", "pi", "gemini", "kiro", "copilot", "droid", "qwen", "windsurf"] as const
+const cleanupTargets = ["codex", "opencode", "pi", "gemini", "kiro", "copilot", "droid", "qwen", "windsurf", "warp"] as const
 type CleanupTarget = typeof cleanupTargets[number]
 
 type CleanupResult = {
@@ -52,7 +57,7 @@ export default defineCommand({
     target: {
       type: "string",
       default: "all",
-      description: "Target to clean: codex | opencode | pi | gemini | kiro | copilot | droid | qwen | windsurf | all",
+      description: "Target to clean: codex | opencode | pi | gemini | kiro | copilot | droid | qwen | windsurf | warp | all",
     },
     output: {
       type: "string",
@@ -104,6 +109,11 @@ export default defineCommand({
       alias: "windsurf-home",
       description: "Deprecated Windsurf root to clean (default: ~/.codeium/windsurf)",
     },
+    warpHome: {
+      type: "string",
+      alias: "warp-home",
+      description: "Warp root to clean for global installs (default: ~/.warp). Workspace installs are detected via --output.",
+    },
     agentsHome: {
       type: "string",
       alias: "agents-home",
@@ -132,11 +142,13 @@ export default defineCommand({
       droidHome: resolveTargetHome(args.droidHome, path.join(os.homedir(), ".factory")),
       qwenHome: resolveTargetHome(args.qwenHome, path.join(os.homedir(), ".qwen")),
       windsurfHome: resolveTargetHome(args.windsurfHome, path.join(os.homedir(), ".codeium", "windsurf")),
+      warpHome: resolveTargetHome(args.warpHome, path.join(os.homedir(), ".warp")),
       agentsHome: resolveTargetHome(args.agentsHome, path.join(os.homedir(), ".agents")),
       workspaceRoot: outputRoot,
       hasExplicitOutput: hasExplicitValue(args.output),
       hasExplicitGeminiHome,
       hasExplicitOpenCodeHome,
+      hasExplicitWarpHome: hasExplicitValue(args.warpHome),
     }
 
     const results: CleanupResult[] = []
@@ -165,11 +177,13 @@ async function cleanupTarget(
     droidHome: string
     qwenHome: string
     windsurfHome: string
+    warpHome: string
     agentsHome: string
     workspaceRoot: string
     hasExplicitOutput: boolean
     hasExplicitGeminiHome: boolean
     hasExplicitOpenCodeHome: boolean
+    hasExplicitWarpHome: boolean
   },
 ): Promise<CleanupResult[]> {
   switch (target) {
@@ -244,6 +258,21 @@ async function cleanupTarget(
         ? [resolveWindsurfWorkspaceRoot(roots.workspaceRoot)]
         : await dedupeRoots([roots.windsurfHome, resolveWindsurfWorkspaceRoot(roots.workspaceRoot)])
       return await Promise.all(rootsToClean.map((root) => cleanupWindsurf(plugin, root)))
+    }
+    case "warp": {
+      // Warp cleanup uses the install manifest only — there is no historical
+      // legacy allow-list because v0.1 is the first release for this target.
+      // Mirror the Gemini/Copilot dedup pattern so concurrent renames cannot
+      // race on the same directory if --warp-home and --output collide.
+      if (roots.hasExplicitWarpHome) {
+        return [await cleanupWarp(plugin, roots.warpHome)]
+      }
+      const workspaceWarp = resolveWarpWorkspaceRoot(roots.workspaceRoot)
+      if (roots.hasExplicitOutput) {
+        return [await cleanupWarp(plugin, workspaceWarp)]
+      }
+      const rootsToClean = await dedupeRoots([workspaceWarp, roots.warpHome])
+      return await Promise.all(rootsToClean.map((root) => cleanupWarp(plugin, root)))
     }
   }
 }
@@ -727,4 +756,49 @@ function resolveDroidWorkspaceRoot(outputRoot: string): string {
 
 function resolveWindsurfWorkspaceRoot(outputRoot: string): string {
   return path.basename(outputRoot) === ".windsurf" ? outputRoot : path.join(outputRoot, ".windsurf")
+}
+
+function resolveWarpWorkspaceRoot(outputRoot: string): string {
+  return path.basename(outputRoot) === ".warp" ? outputRoot : path.join(outputRoot, ".warp")
+}
+
+/**
+ * Manifest-driven cleanup for the Warp target.
+ *
+ * v0.1 is the first release of this target, so there is no historical
+ * legacy allow-list to consult. Cleanup reads the install manifest written
+ * by `writeWarpBundle`, moves every recorded artifact into the
+ * `<warp>/<plugin>/legacy-backup/<timestamp>/` tree, and exits. If no
+ * manifest exists, the cleanup is a safe no-op — we deliberately do NOT
+ * scan `.warp/skills/` for things that look CE-shaped because that
+ * directory is shared with user-authored skills.
+ */
+async function cleanupWarp(
+  plugin: Awaited<ReturnType<typeof loadClaudePlugin>>,
+  warpRoot: string,
+): Promise<CleanupResult> {
+  // Convert solely to confirm the bundle is parseable; we only consult the
+  // manifest below for the artifact list. The conversion is cheap and keeps
+  // the cleanup-target signature consistent with other targets.
+  convertClaudeToWarp(plugin, {
+    agentMode: "subagent",
+    inferTemperature: true,
+    permissions: "none",
+    codexIncludeSkills: false,
+  })
+  const pluginName = sanitizeManagedPluginName(plugin.manifest.name)
+  const managedDir = path.join(warpRoot, pluginName)
+  const manifest = await readManagedInstallManifestWithLegacyFallback(managedDir, pluginName)
+  if (!manifest) return { target: "warp", root: warpRoot, moved: 0 }
+
+  const skillsDir = path.join(warpRoot, "skills")
+  const agentsDir = path.join(skillsDir, "_ce-agents")
+  let moved = 0
+  for (const skillName of manifest.groups.skills ?? []) {
+    moved += await moveIfExists(managedDir, "skills", skillsDir, skillName, "Warp")
+  }
+  for (const agentFile of manifest.groups.agents ?? []) {
+    moved += await moveIfExists(managedDir, "agents", agentsDir, agentFile, "Warp")
+  }
+  return { target: "warp", root: warpRoot, moved }
 }

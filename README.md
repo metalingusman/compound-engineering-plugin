@@ -193,6 +193,34 @@ bunx @every-env/compound-plugin install compound-engineering --to gemini
 bunx @every-env/compound-plugin install compound-engineering --to kiro
 ```
 
+### Warp (experimental, fork only)
+
+This fork ([metalingusman/compound-engineering-plugin](https://github.com/metalingusman/compound-engineering-plugin)) adds a `--to warp` target that installs the Compound Engineering skills into Warp's `.warp/skills/` directory and merges a Compound Engineering section into your project's `AGENTS.md`. The `bunx github:` form is the v0.1 install path; v0.2+ will publish under an npm scope.
+
+Workspace install (default — into the current project):
+
+```bash
+bunx github:metalingusman/compound-engineering-plugin install compound-engineering --to warp
+```
+
+Global install (skills available across all projects, no `AGENTS.md` merge):
+
+```bash
+bunx github:metalingusman/compound-engineering-plugin install compound-engineering --to warp --scope global
+```
+
+After install, the Compound Engineering skills appear in Warp under `/<skill-name>` (e.g. `/ce-brainstorm`, `/ce-plan`, `/ce-work`, `/ce-code-review`, `/ce-compound`). Reviewer personas live at `.warp/skills/_ce-agents/<name>.md` and are loaded by their dispatching skills via relative paths — do not invoke them as slash commands directly.
+
+**v0.1 limitations.** Multi-persona review pipelines (`/ce-code-review`, `/ce-doc-review`, `/ce-work` quality phase) iterate reviewer personas serially in v0.1. v0.2 lowers them to Warp's `/orchestrate` primitive for true parallel execution. See [`docs/warp.md`](docs/warp.md) for the full design.
+
+**MCP servers.** Warp configures MCP servers through its in-app UI rather than via files in the repo, so the install does not write any MCP config. The postinstall hint lists the recommended servers (e.g. `agent-browser`, `XcodeBuildMCP`); register them via `/add-mcp` in Warp.
+
+To back up a previous Warp install before reinstalling, use the cleanup command:
+
+```bash
+bunx github:metalingusman/compound-engineering-plugin cleanup --target warp
+```
+
 **Pi prerequisites.** Pi does not ship a native subagent primitive, so the Pi install depends on [nicobailon/pi-subagents](https://github.com/nicobailon/pi-subagents) (required) and recommends [edlsh/pi-ask-user](https://github.com/edlsh/pi-ask-user) for richer blocking user questions:
 
 ```bash
